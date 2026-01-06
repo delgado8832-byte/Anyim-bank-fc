@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Secure Demo Terminal</title>
+  <style>
+    :root {
+      --bg: #000;
+      --fg: #00ff00;
+      --muted: #6aff90;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
+    }
+
+    html,body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--mono);
+      padding: 24px;
+      line-height: 1.45;
+    }
+
+    header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom: 12px;
+    }
+
+    h2 { margin:0; font-size:1.25rem; color:var(--muted) }
+
+    .controls {
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    label { font-size:0.85rem; color:var(--fg) }
+    input[type="range"] { width:140px; }
+
+    .terminal {
+      background: rgba(0,0,0,0.6);
+      border: 1px solid #083;
+      padding: 16px;
+      border-radius:6px;
+      max-width:900px;
+    }
+
+    pre#text {
+      margin:0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      font-size:1rem;
+      min-height: 8rem;
+    }
+
+    .cursor {
+      display:inline-block;
+      width:10px;
+      height:1.1em;
+      background:var(--fg);
+      vertical-align:bottom;
+      margin-left:4px;
+      animation: blink 1s steps(2, start) infinite;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    /* Respect prefers-reduced-motion */
+    @media (prefers-reduced-motion: reduce) {
+      .cursor { animation: none; opacity: 1; }
+    }
+
+    .disclaimer {
+      margin-top:12px;
+      color:#9fefc0;
+      font-size:0.9rem;
+    }
+
+    button {
+      background:transparent;
+      border:1px solid #0b6;
+      color:var(--fg);
+      padding:6px 10px;
+      border-radius:4px;
+      cursor:pointer;
+      font-family:var(--mono);
+    }
+    button:focus { outline:2px solid #0b8; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h2>🏦 Secure Demo Terminal</h2>
+  <div class="controls" aria-hidden="false">
+    <label for="speed">Speed</label>
+    <input id="speed" type="range" min="50" max="1200" step="50" value="800" />
+    <button id="replay">Replay</button>
+  </div>
+</header>
+
+<section class="terminal" aria-label="Demo terminal output">
+  <pre id="text" role="status" aria-live="polite"></pre><span class="cursor" aria-hidden="true"></span>
+  <div class="disclaimer" aria-hidden="false">
+    This page is a harmless demo/prank terminal. It does not attempt real access, hacking, or transactions.
+  </div>
+</section>
+
+<script>
+(function () {
+  'use strict';
+
+  const originalLines = [
+    "Initializing secure demo...",
+    "Connecting to public demo server...",
+    "Performing safety checks...",
+    "Status: all systems nominal",
+    "Loading sample accounts (sanitized)...",
+    "Account: ****4321",
+    "Balance: $0.00 (demo only)",
+    "Preparing demo transfer (no real transaction)...",
+    "Operation: simulated",
+    "Result: completed ✔",
+    "NOTE: This is a harmless demo. No private data accessed.",
+    "Have a nice day! 😎"
+  ];
+
+  const textEl = document.getElementById('text');
+  const speedEl = document.getElementById('speed');
+  const replayBtn = document.getElementById('replay');
+
+  // Use innerText to avoid injecting HTML
+  function typeLines(lines, delay) {
+    textEl.innerText = '';
+    let i = 0;
+    let canceled = false;
+
+    return new Promise((resolve) => {
+      function step() {
+        if (canceled) return resolve();
+        if (i >= lines.length) return resolve();
+        textEl.innerText += lines[i] + '\n';
+        i++;
+        setTimeout(step, delay);
+      }
+      step();
+    });
+  }
+
+  // Respect reduced-motion by using a larger delay or skipping animation
+  function prefersReducedMotion() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  async function play() {
+    const rawSpeed = Number(speedEl.value) || 800;
+    const delay = prefersReducedMotion() ? Math.max(250, rawSpeed) : rawSpeed;
+    await typeLines(originalLines, delay);
+  }
+
+  replayBtn.addEventListener('click', play);
+  // Allow changing speed while playing: simply restart on change
+  speedEl.addEventListener('change', () => {
+    // simple restart for clarity
+    play();
+  });
+
+  // Auto-start
+  play();
+
+  // Expose for debugging if needed (safe)
+  window._demoTerminal = { play };
+
+})();
+</script>
+
+</body>
+</html>
